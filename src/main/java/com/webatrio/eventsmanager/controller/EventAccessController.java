@@ -32,7 +32,8 @@ public class EventAccessController {
 
     @Tag(name = "Events")
     @RequestMapping(value = "/list-incoming-events", method = RequestMethod.GET)
-    public ResponseEntity<Object> getEventsByLocation(@SortDefault(sort = "priRole") @PageableDefault(size = 20) final Pageable pageable, @RequestBody Optional<String> location) {
+    public ResponseEntity<Object> getEventsByLocation(@SortDefault(sort = "location") @PageableDefault(size = 20) final Pageable pageable, @RequestBody Optional<String> location) {
+
         return EntityResponse.generateResponse("Incoming Events", HttpStatus.OK, eventService.findFutureEventsByLocation(location, pageable));
     }
 
@@ -40,6 +41,7 @@ public class EventAccessController {
     @RequestMapping(value = "/delete-event", method = RequestMethod.POST)
     public ResponseEntity<Object> deleteEvent(@RequestBody Long id) {
         if (eventService.findEventById(id).isPresent()) {
+            eventService.deleteEvent(id);
             return ResponseEntity.ok("DELETED");
         } else {
             return ResponseEntity.ok("item not found");
@@ -49,12 +51,18 @@ public class EventAccessController {
     @Tag(name = "Events")
     @RequestMapping(value = "/edit-event", method = RequestMethod.POST)
     public ResponseEntity<Object> updateEvent(@RequestBody Event event) {
-        return EntityResponse.generateResponse("Event", HttpStatus.OK, eventService.updateEvent(event));
+        Event response = eventService.updateEvent(event);
+        if (response == null) {
+            return EntityResponse.generateResponse("Event not found", HttpStatus.OK, null);
+        } else {
+            return EntityResponse.generateResponse("Event", HttpStatus.OK, response);
+
+        }
     }
 
     @Tag(name = "Inscription")
     @PostMapping(value = "/list-event-users/{eventId}")
-    public ResponseEntity<Object> listEventParticipant(@SortDefault(sort = "priRole") @PageableDefault(size = 20) final Pageable pageable, @PathVariable Long eventId) {
+    public ResponseEntity<Object> listEventParticipant(@SortDefault(sort = "username") @PageableDefault(size = 20) final Pageable pageable, @PathVariable Long eventId) {
         return EntityResponse.generateResponse("Event participants", HttpStatus.OK, eventService.findEventParticipants(eventId, pageable));
     }
 

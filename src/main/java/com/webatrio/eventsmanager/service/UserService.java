@@ -1,12 +1,16 @@
 package com.webatrio.eventsmanager.service;
 
 import com.webatrio.eventsmanager.entity.Event;
+import com.webatrio.eventsmanager.entity.Role;
+import com.webatrio.eventsmanager.entity.User;
 import com.webatrio.eventsmanager.entity.UserRole;
 import com.webatrio.eventsmanager.entity.dto.UserRegisterRequestDTO;
 import com.webatrio.eventsmanager.repository.IEventRepository;
+import com.webatrio.eventsmanager.repository.IUserRepository;
+import com.webatrio.eventsmanager.repository.IUserRoleRepository;
 import com.webatrio.eventsmanager.security.SecurityPrincipal;
-import com.webatrio.eventsmanager.entity.Role;
-import com.webatrio.eventsmanager.entity.User;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +21,11 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
-import com.webatrio.eventsmanager.repository.IUserRepository;
-import com.webatrio.eventsmanager.repository.IUserRoleRepository;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -38,6 +43,9 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     RoleService roleService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public UserDetails loadUserByUsername(String username) {
@@ -65,9 +73,9 @@ public class UserService implements UserDetailsService {
             User user = (User) dtoMapperRequestDtoToUser(request);
 
             user = userRepository.save(user);
-            if(!request.getRoleList().isEmpty()) {
+            if (!request.getRoleList().isEmpty()) {
                 for (String role : request.getRoleList()) {
-                    Role existingRole = roleService.findRoleByName("ROLE_"+role.toUpperCase());
+                    Role existingRole = roleService.findRoleByName("ROLE_" + role.toUpperCase());
                     if (existingRole != null) {
                         addUserRole(user, existingRole);
                     }
@@ -87,7 +95,7 @@ public class UserService implements UserDetailsService {
         return userRepository.findAll();
     }
 
-    public User updateUser(UserRegisterRequestDTO userRequestDTO){
+    public User updateUser(UserRegisterRequestDTO userRequestDTO) {
         User user = (User) dtoMapperRequestDtoToUser(userRequestDTO);
 
         user = userRepository.save(user);
@@ -123,32 +131,44 @@ public class UserService implements UserDetailsService {
         userRoleRepository.save(userRole);
     }
 
-/*    public Set<Event> getEventsForParticipant(Long participantId) {
-        Optional<User> participantOptional = userRepository.findById(participantId);
-        if (participantOptional.isPresent()) {
-            User participant = participantOptional.get();
-            return participant.getEvents();
-        } else {
-            return Collections.emptySet();
-        }
-    }*/
-
     public Page<Event> getEventsForParticipant(Long participantId, Pageable pageable) {
         return eventRepository.findByParticipantId(participantId, pageable);
     }
 
+    @Transactional
+    public Object deleteParticipation(Event event) {
+        User user = findCurrentUser();
+
+        user.getEvents().remove(event);
+        event.getParticipants().remove(user);
+
+        eventRepository.save(event);
+        userRepository.save(user);
+
+        return event;
+    }
+
+    @Transactional
     public void participateInEvent(Long eventId) {
         User participant = findCurrentUser();
         Optional<Event> eventOptional = eventRepository.findById(eventId);
 
         if (participant != null && eventOptional.isPresent()) {
+
             Event event = eventOptional.get();
+            if (event.getCapacity() > (long) event.getParticipants().size()) {
+                event.getParticipants().add(participant);
+                participant.getEvents().add(event);
+                LOG.error(event.getParticipants().toString());
 
-            participant.getEvents().add(event);
-            event.getParticipants().add(participant);
 
-            userRepository.save(participant);
-            eventRepository.save(event);
+                userRepository.save(participant);
+                eventRepository.save(event);
+            } else {
+                throw new IllegalArgumentException("Event at maximum capacity");
+
+            }
+
         } else {
             throw new IllegalArgumentException("User or Event not found");
         }
@@ -158,7 +178,6 @@ public class UserService implements UserDetailsService {
         User target = new User();
         target.setUsername(source.getUsername());
         target.setPassword(source.getPassword());
-
         return target;
     }
 }

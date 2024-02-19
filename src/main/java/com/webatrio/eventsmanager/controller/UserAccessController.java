@@ -96,7 +96,7 @@ public class UserAccessController {
 
     @Tag(name = "Participant")
     @GetMapping("user-events")
-    public ResponseEntity<Object> getEventsForParticipant(@SortDefault(sort = "priRole") @PageableDefault(size = 20) final Pageable pageable) {
+    public ResponseEntity<Object> getEventsForParticipant(@SortDefault(sort = "capacity") @PageableDefault(size = 20) final Pageable pageable) {
         Long participantId = userService.findCurrentUser().getId();
         return EntityResponse.generateResponse("User events", HttpStatus.OK, userService.getEventsForParticipant(participantId, pageable));
     }
@@ -113,12 +113,11 @@ public class UserAccessController {
     @PostMapping("cancel-inscription/{eventId}")
     public ResponseEntity<Object> cancelInscription(@PathVariable Long eventId) {
         Event event = eventService.findEventById(eventId).get();
-        event.getParticipants().remove(userService.findCurrentUser());
-        return EntityResponse.generateResponse("Participation removed", HttpStatus.OK, eventService.updateEvent(event));
+        return EntityResponse.generateResponse("Participation removed", HttpStatus.OK, userService.deleteParticipation(event));
     }
 
     @GetMapping("role-list")
-    public ResponseEntity<Object> getAllRoleList(){
+    public ResponseEntity<Object> getAllRoleList() {
         return EntityResponse.generateResponse("Admin Fetch Role List", HttpStatus.OK,
                 roleService.findAllRole());
     }

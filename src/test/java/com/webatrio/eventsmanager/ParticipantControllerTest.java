@@ -2,6 +2,7 @@ package com.webatrio.eventsmanager;
 
 import com.webatrio.eventsmanager.controller.UserAccessController;
 import com.webatrio.eventsmanager.entity.Event;
+import com.webatrio.eventsmanager.entity.User;
 import com.webatrio.eventsmanager.repository.IEventRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -13,7 +14,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,11 +41,19 @@ public class ParticipantControllerTest {
         event2.setId(2L);
         event2.setTitle("Event 2");
 
+        User participant = new User();
+        participant.setId(1L);
+        participant.setUsername("test");
+        participant.setPassword("1234");
+
         List<Event> events = Arrays.asList(event1, event2);
+        Set<Event> eventsSet = new HashSet<>(events);
+        participant.setEvents(eventsSet);
+
         Page<Event> page = new PageImpl<>(events);
 
         // Mock the repository method
-        when(eventRepository.findByParticipantId(anyLong(), any(Pageable.class))).thenReturn(page);
+        when(eventRepository.findByParticipantId(1L, any(Pageable.class))).thenReturn(page);
 
         // Call the controller method
         ResponseEntity<Object> response = participantController.getEventsForParticipant(Pageable.unpaged());

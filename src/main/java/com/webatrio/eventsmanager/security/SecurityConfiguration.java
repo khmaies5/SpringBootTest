@@ -114,18 +114,18 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChainEventManager(HttpSecurity httpSecurity) throws Exception {
         sharedSecurityConfiguration(httpSecurity);
-        httpSecurity.securityMatcher("/event/add-event","event/delete-event","event/edit-event", "/list-event-users/*").authorizeHttpRequests(auth -> {
+        httpSecurity.securityMatcher("/event/add-event","event/delete-event","event/edit-event", "event/list-event-users/*").authorizeHttpRequests(auth -> {
             auth.anyRequest()
                     .hasRole("ORGANISER");
-        });
+        }).addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
 
     @Bean SecurityFilterChain securityFilterChainEventParticipant(HttpSecurity httpSecurity) throws Exception {
         sharedSecurityConfiguration(httpSecurity);
-        httpSecurity.securityMatcher("/event/list-events-by-location").authorizeHttpRequests(auth -> {
+        httpSecurity.securityMatcher("/event/list-incoming-events","/user/cancel-inscription/*").authorizeHttpRequests(auth -> {
             auth.anyRequest().fullyAuthenticated();
-        });
+        }).addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
 
@@ -134,7 +134,7 @@ public class SecurityConfiguration {
         sharedSecurityConfiguration(httpSecurity);
         httpSecurity.securityMatcher("/v3/api-docs/**", "/swagger-ui.html", "/swagger/ui/**", "/v3/api-docs.yaml").authorizeHttpRequests(auth -> {
             auth.anyRequest().permitAll();
-        });
+        }).addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
     }

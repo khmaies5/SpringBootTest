@@ -27,11 +27,16 @@ public class EventService {
     private IUserRepository userRepository;
 
     public List<Event> findFutureEventsByLocation(Optional<String> location, Pageable pageable) {
-        return eventRepository.findAll(pageable).stream().filter(event -> event.getLocation().equals(location.get())).filter(event -> event.getStartDateTIme().toInstant().isAfter(Instant.now())).collect(Collectors.toList());
+        return location.map(s -> eventRepository.findAll(pageable).stream().filter(event -> event.getLocation().equals(s)).filter(event -> event.getStartDateTime().toInstant().isAfter(Instant.now())).collect(Collectors.toList())).orElseGet(() -> eventRepository.findAll(pageable).stream().filter(event -> event.getStartDateTime().toInstant().isAfter(Instant.now())).collect(Collectors.toList()));
+
     }
 
     public Event updateEvent(Event event) {
-        return eventRepository.save(event);
+        if(eventRepository.existsById(event.getId())) {
+            return eventRepository.save(event);
+        } else {
+           return null;
+        }
     }
 
     public Event createNewEvent(Event event) {
