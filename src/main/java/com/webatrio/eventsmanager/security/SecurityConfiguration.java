@@ -114,7 +114,7 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChainEventManager(HttpSecurity httpSecurity) throws Exception {
         sharedSecurityConfiguration(httpSecurity);
-        httpSecurity.securityMatcher("/event/add-event","event/delete-event","event/edit-event").authorizeHttpRequests(auth -> {
+        httpSecurity.securityMatcher("/event/add-event","event/delete-event","event/edit-event", "/list-event-users/*").authorizeHttpRequests(auth -> {
             auth.anyRequest()
                     .hasRole("ORGANISER");
         });
