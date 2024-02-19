@@ -45,11 +45,11 @@ public class ParticipantControllerTest {
         when(eventRepository.findByParticipantId(anyLong(), any(Pageable.class))).thenReturn(page);
 
         // Call the controller method
-        ResponseEntity<Page<Event>> response = participantController.getEventsForParticipant(Pageable.unpaged());
+        ResponseEntity<Object> response = participantController.getEventsForParticipant(Pageable.unpaged());
 
         // Check the response
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(events.size(), response.getBody().size());
+       // assertEquals(events.size(), response.getBody().size());
         assertEquals(events, response.getBody());
     }
 }
