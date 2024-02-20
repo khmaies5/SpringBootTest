@@ -122,10 +122,4 @@ public class UserAccessController {
                 roleService.findAllRole());
     }
 
-//    @GetMapping("user-list")
-//    public ResponseEntity<Object> getAllUserList(){
-//        return EntityResponse.generateResponse("Admin Fetch User List", HttpStatus.OK,
-//                userService.retrieveAllUserList());
-//    }
-
 }

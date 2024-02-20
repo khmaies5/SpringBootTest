@@ -13,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
-
 @RestController
 @RequestMapping("event")
 public class EventAccessController {
@@ -32,7 +30,8 @@ public class EventAccessController {
 
     @Tag(name = "Events")
     @RequestMapping(value = "/list-incoming-events", method = RequestMethod.GET)
-    public ResponseEntity<Object> getEventsByLocation(@SortDefault(sort = "location") @PageableDefault(size = 20) final Pageable pageable, @RequestBody Optional<String> location) {
+    public ResponseEntity<Object> getEventsByLocation(@SortDefault(sort = "location") @PageableDefault(size = 20) final Pageable pageable, @RequestParam(defaultValue = "") String location) {
+        System.out.println("location : " + location);
 
         return EntityResponse.generateResponse("Incoming Events", HttpStatus.OK, eventService.findFutureEventsByLocation(location, pageable));
     }

@@ -1,5 +1,6 @@
 package com.webatrio.eventsmanager.security;
 
+import com.webatrio.eventsmanager.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +12,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -28,7 +28,7 @@ import java.util.List;
 public class SecurityConfiguration {
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserService userService;
 
     @Autowired
     private JWTRequestFilter jwtRequestFilter;
@@ -36,28 +36,24 @@ public class SecurityConfiguration {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         final List<GlobalAuthenticationConfigurerAdapter> configurers = new ArrayList<>();
         configurers.add(new GlobalAuthenticationConfigurerAdapter() {
             @Override
             public void configure(AuthenticationManagerBuilder auth) throws Exception {
-                auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
+                auth.userDetailsService(userService).passwordEncoder(passwordEncoder);
             }
         });
         return authConfig.getAuthenticationManager();
     }
 
     private void sharedSecurityConfiguration(HttpSecurity httpSecurity) throws Exception {
-        /*httpSecurity.csrf(AbstractHttpConfigurer::disable).cors().configurationSource(corsConfigurationSource()).and()
-                .sessionManagement(httpSecuritySessionManagementConfigurer -> {
-                    httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
-                });*/
         httpSecurity.csrf(AbstractHttpConfigurer::disable).cors(AbstractHttpConfigurer::disable)
                 .sessionManagement(httpSecuritySessionManagementConfigurer -> {
                     httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
                 });
-
     }
 
     @Bean
@@ -114,16 +110,17 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChainEventManager(HttpSecurity httpSecurity) throws Exception {
         sharedSecurityConfiguration(httpSecurity);
-        httpSecurity.securityMatcher("/event/add-event","event/delete-event","event/edit-event", "event/list-event-users/*").authorizeHttpRequests(auth -> {
+        httpSecurity.securityMatcher("/event/add-event", "event/delete-event", "event/edit-event", "event/list-event-users/*").authorizeHttpRequests(auth -> {
             auth.anyRequest()
                     .hasRole("ORGANISER");
         }).addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
     }
 
-    @Bean SecurityFilterChain securityFilterChainEventParticipant(HttpSecurity httpSecurity) throws Exception {
+    @Bean
+    SecurityFilterChain securityFilterChainEventParticipant(HttpSecurity httpSecurity) throws Exception {
         sharedSecurityConfiguration(httpSecurity);
-        httpSecurity.securityMatcher("/event/list-incoming-events","/user/cancel-inscription/*").authorizeHttpRequests(auth -> {
+        httpSecurity.securityMatcher("/event/list-incoming-events", "/user/cancel-inscription/*").authorizeHttpRequests(auth -> {
             auth.anyRequest().fullyAuthenticated();
         }).addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();

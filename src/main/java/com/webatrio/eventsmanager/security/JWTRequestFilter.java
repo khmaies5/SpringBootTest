@@ -1,6 +1,7 @@
 package com.webatrio.eventsmanager.security;
 
 import com.webatrio.eventsmanager.service.RoleService;
+import com.webatrio.eventsmanager.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +27,7 @@ public class JWTRequestFilter extends OncePerRequestFilter {
     private static final Logger LOG = LoggerFactory.getLogger(JWTRequestFilter.class);
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserService userDetailsService;
 
     @Autowired
     private JWTTokenUtil jwtTokenUtil;
